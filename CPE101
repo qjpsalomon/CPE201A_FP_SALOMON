@@ -1,0 +1,149 @@
+#include "WaterMonitoring.h"
+#include <limits>
+
+unordered_map<string, User> users;
+
+bool registerUser() {
+    string username, password;
+    cout << "\n--- Register ---\nUsername: ";
+    cin >> username;
+
+    if (users.count(username)) {
+        cout << "Username already exists!\n";
+        return false;
+    }
+
+    cout << "Password: ";
+    cin >> password;
+
+    users[username] = { password, {} };
+    cout << "Registration successful!\n";
+    return true;
+}
+
+string loginUser() {
+    string username, password;
+    cout << "\n--- Login ---\nUsername: ";
+    cin >> username;
+    cout << "Password: ";
+    cin >> password;
+
+    if (users.count(username) && users[username].password == password)
+        return username;
+
+    cout << "Invalid username or password!\n";
+    return "";
+}
+
+void addConsumption(User& user) {
+    if (user.consumption.size() >= MAX_DAYS_RECORDED) {
+        cout << "!!! RECORDING STOP YOU REACH YOUR MAXIMUM DAYS LIMIT !!!" << endl;
+        return;
+    }
+
+    double value;
+    cout << "Enter today's water consumption (liters): ";
+
+    if (!(cin >> value) || value < 0) {
+        cout << "Invalid input. Please enter a positive number.\n";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        return;
+    }
+
+    user.consumption.push_back(value);
+    cout << "Recorded! Current days: " << user.consumption.size()
+         << " / " << MAX_DAYS_RECORDED << "\n";
+}
+
+void analyzeConsumption(const User& user) {
+    if (user.consumption.empty()) {
+        cout << "No consumption data available.\n";
+        return;
+    }
+
+    double sum = 0;
+    double minVal = user.consumption[0];
+    double maxVal = user.consumption[0];
+
+    for (double v : user.consumption) {
+        sum += v;
+        if (v < minVal) minVal = v;
+        if (v > maxVal) maxVal = v;
+    }
+
+    cout << "\n--- Consumption Analysis ---\n";
+    cout << "Total days recorded: " << user.consumption.size()
+         << " (Max: " << MAX_DAYS_RECORDED << ")\n";
+    cout << "Total consumption: " << sum << " liters\n";
+    cout << "Average daily consumption: " << (sum / user.consumption.size()) << " liters\n";
+    cout << "Minimum consumption: " << minVal << " liters\n";
+    cout << "Maximum consumption: " << maxVal << " liters\n";
+}
+
+
+
+#include "WaterMonitoring.h"
+#include <limits>
+
+int main() {
+    while (true) {
+        cout << "\n==============================\n";
+        cout << "1. Register\n2. Login\n3. Exit\nChoose: ";
+        int choice;
+
+        if (!(cin >> choice)) {
+            cout << "Invalid input. Please enter a number.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            continue;
+        }
+
+        if (choice == 1) {
+            registerUser();
+        }
+        else if (choice == 2) {
+            string username = loginUser();
+
+            if (username.empty()) continue;
+
+            User& user = users[username];
+
+            while (true) {
+                cout << "\n--- Logged In: " << username << " ---\n";
+                cout << "1. Add Consumption\n2. Analyze Consumption\n3. Logout\nChoose: ";
+                int subChoice;
+
+                if (!(cin >> subChoice)) {
+                    cout << "Invalid input. Please enter a number.\n";
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    continue;
+                }
+
+                if (subChoice == 1) {
+                    addConsumption(user);
+                }
+                else if (subChoice == 2) {
+                    analyzeConsumption(user);
+                }
+                else if (subChoice == 3) {
+                    cout << "Logging out " << username << "...\n";
+                    break;
+                }
+                else {
+                    cout << "Invalid option.\n";
+                }
+            }
+        }
+        else if (choice == 3) {
+            break;
+        }
+        else {
+            cout << "Invalid option.\n";
+        }
+    }
+
+    cout << "\nExiting Water Tracker application. Goodbye!\n";
+    return 0;
+}
